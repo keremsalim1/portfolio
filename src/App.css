@@ -927,7 +927,7 @@
 }
 
 /* ---- Aurora: hero arkasında süzülen ışık kütleleri ---- */
-.hero { position: relative; overflow-x: clip; }
+.hero { position: relative; }
 .hero-aurora {
   position: absolute;
   inset: -10% -20%;

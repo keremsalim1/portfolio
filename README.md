@@ -4,7 +4,7 @@ Personal portfolio site of Kerem Salim, a final-year Software Engineering studen
 A single-page React application with an interactive 3D hero scene, a data-driven
 content model, and detailed project case studies.
 
-**Live:** https://your-domain.com _(update once deployed)_
+**Live:** https://keremsalim.com _(update once deployed)_
 
 ---
 

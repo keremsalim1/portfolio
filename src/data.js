@@ -9,6 +9,7 @@ import signaturkKemer from './assets/case-studies/signaturk/live-kemer.png'
 import vbaDashboard from './assets/case-studies/value-bet-analyzer/dashboard.png'
 import vbaBacktest from './assets/case-studies/value-bet-analyzer/backtest.png'
 import emuLogo from './assets/emu-logo.png'
+import softwarePersonaLogo from './assets/software-persona-logo.jpg'
 
 export const profile = {
   name: 'Kerem Salim',
@@ -35,24 +36,73 @@ export const socials = [
   { label: 'Email', url: 'mailto:salimkerem22@gmail.com', icon: 'mail' },
 ]
 
-// Yetenekler — kategorilere ayrılmış
+// Yetenekler — kategorilere ayrılmış (Skills bölümündeki kartlar)
 export const skills = [
   {
-    category: 'Languages',
-    items: ['Python', 'Java', 'C', 'SQL', 'JavaScript'],
+    category: 'Programming Languages',
+    items: ['Python', 'SQL', 'JavaScript', 'Java', 'C'],
+  },
+  {
+    category: 'AI & Machine Learning',
+    items: [
+      'Machine Learning',
+      'Deep Learning',
+      'Computer Vision',
+      'Generative AI',
+      'Prompt Engineering',
+      'Pose Estimation (RTMW / RTMPose)',
+      'Ensemble Models',
+      'Real-Time Inference',
+      'Model Evaluation & Backtesting',
+      'Statistical & Bayesian Modeling',
+    ],
+  },
+  {
+    category: 'ML Frameworks & Libraries',
+    items: ['TensorFlow / Keras', 'Scikit-learn', 'Pandas', 'NumPy', 'ONNX Runtime'],
+  },
+  {
+    category: 'Backend, Data & MLOps',
+    items: ['FastAPI', 'REST APIs', 'WebSockets', 'Docker', 'PostgreSQL', 'SQLite', 'Pytest', 'Git', 'Linux'],
   },
   {
     category: 'Frontend',
-    items: ['React', 'Three.js', 'React Three Fiber', 'Vite', 'HTML5', 'CSS3'],
+    items: ['React.js', 'Vite', 'Three.js', 'React Three Fiber', 'Recharts', 'HTML5', 'CSS3'],
   },
   {
-    category: 'Backend & Data',
-    items: ['FastAPI', 'TensorFlow / Keras', 'PostgreSQL', 'Docker', 'REST APIs', 'WebSockets'],
+    category: 'CS Fundamentals',
+    items: [
+      'Data Structures & Algorithms',
+      'Object-Oriented Programming',
+      'Software Development Lifecycle',
+      'Computer Networks',
+    ],
   },
-  {
-    category: 'Concepts & Tools',
-    items: ['Data Structures & Algorithms', 'OOP', 'Machine Learning', 'Computer Vision', 'Git', 'Linux', 'Pytest'],
-  },
+]
+
+// Hero altındaki sonsuz kayan şerit — bilinçli olarak sadece AI/ML odaklı
+// yetenekler. Skills kartlarından ayrı tutuluyor ki şerit dağılmasın.
+export const marqueeSkills = [
+  'Python',
+  'Machine Learning',
+  'Deep Learning',
+  'TensorFlow / Keras',
+  'Computer Vision',
+  'Scikit-learn',
+  'Generative AI',
+  'Pandas',
+  'Prompt Engineering',
+  'NumPy',
+  'Pose Estimation',
+  'ONNX Runtime',
+  'Ensemble Models',
+  'Real-Time Inference',
+  'Model Evaluation',
+  'Statistical & Bayesian Modeling',
+  'FastAPI',
+  'Docker',
+  'SQL',
+  'Git',
 ]
 
 // Projeler — github/demo linki varsa ekle, yoksa boş bırak (ikon gizlenir)
@@ -187,6 +237,18 @@ export const projects = [
 export const timeline = [
   {
     type: 'work',
+    title: 'AI Development Intern',
+    place: 'TNC Group — Software Persona, Remote',
+    date: 'Sep – Oct 2026 (40 hours)',
+    logo: softwarePersonaLogo,
+    logoAlt: 'Software Persona — TNC Group',
+    logoShape: 'wordmark',
+    accreditation: 'CPD Accredited Program',
+    description:
+      'Completed an intensive 40-hour, CPD-accredited AI training and mentorship program covering Python, web development, generative AI content creation, and machine learning & deep learning applications. Built an end-to-end applied AI project that spanned the full workflow, from implementation through AI-supported content generation, and applied ML/DL concepts in hands-on exercises using generative AI tools and prompt engineering techniques. Followed modular software development practices and Git-based version control throughout the project lifecycle.',
+  },
+  {
+    type: 'work',
     title: 'Software Engineering Intern',
     place: 'NFS Yazılım ve Stratejik Danışmanlık Ltd. Şti., Edirne, Türkiye',
     date: 'Jul – Sep 2025 (40 working days)',
@@ -197,7 +259,7 @@ export const timeline = [
     type: 'education',
     title: 'B.Sc. in Software Engineering',
     place: 'Eastern Mediterranean University, Cyprus',
-    date: '09/2021 – Expected 07/2026',
+    date: '09/2021 – Expected 02/2027',
     logo: emuLogo,
     logoAlt: 'Eastern Mediterranean University',
     accreditation: 'ABET Accredited Program',

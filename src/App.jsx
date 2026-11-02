@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import './App.css'
-import { profile, socials, skills, projects, timeline } from './data'
+import { profile, socials, skills, marqueeSkills, projects, timeline } from './data'
 import Typewriter from './components/Typewriter'
 import Icon from './components/Icon'
 import ProjectDetail from './components/ProjectDetail'
@@ -82,9 +82,9 @@ function Spotlight() {
   return <div ref={ref} className="spotlight" aria-hidden="true" />
 }
 
-/* Sonsuz akan teknoloji şeridi */
+/* Sonsuz akan teknoloji şeridi — AI/ML odaklı liste (data.js: marqueeSkills) */
 function TechMarquee() {
-  const items = skills.flatMap((g) => g.items)
+  const items = marqueeSkills
   // Kesintisiz döngü için liste iki kez basılır
   return (
     <div className="marquee" aria-hidden="true">
@@ -374,7 +374,7 @@ function Timeline() {
               <div className="timeline-head">
                 {item.logo && (
                   <img
-                    className="timeline-logo"
+                    className={`timeline-logo ${item.logoShape || ''}`}
                     src={item.logo}
                     alt={item.logoAlt || item.place}
                     loading="lazy"

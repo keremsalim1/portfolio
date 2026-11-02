@@ -321,6 +321,12 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 22px;
 }
+/* Kategorilerin öğe sayısı çok farklı (ör. 5'e karşı 10). Kartlar satır
+   yüksekliğini doldurmazsa ızgara tırtıklı görünür. */
+.skills-grid > .reveal,
+.skills-grid .skill-card {
+  height: 100%;
+}
 .skill-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -525,6 +531,24 @@
   flex-shrink: 0;
   border-radius: 50%;
   box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.6);
+}
+/* Kare tuvale oturtulmuş geniş kelime-logolar: dairesel kırpma yazıyı keserdi.
+   object-fit: cover kareyi genişliğe göre ölçekleyip dikey boşluğu kırpar. */
+.timeline-logo.wordmark {
+  width: 132px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #fff;
+}
+@media (max-width: 560px) {
+  /* Dar ekranda logoyu yan yana tutmak başlığa 3-4 satır kırılma bıraktığı
+     için logo başlığın üstüne alınır. */
+  .timeline-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 .timeline-head-text { min-width: 0; }
 .timeline-accredited {

@@ -10,12 +10,15 @@ content model, and detailed project case studies.
 
 ## Features
 
-- **Interactive 3D hero** — a distorting neon sphere with an orbiting satellite and
-  drifting star particles, built with Three.js and React Three Fiber, reacting to
-  cursor movement.
+- **Scroll-driven particle scene** — ~16k GPU particles (custom GLSL shaders) fixed
+  behind the page morph from a 21-point hand-landmark skeleton (a nod to SignaTurk)
+  into a neural network, a probability surface and finally a sphere as you scroll.
+- **Smooth motion layer** — Lenis smooth scrolling synced with GSAP ScrollTrigger:
+  stacking project panels, a self-drawing timeline, masked text reveals, a custom
+  cursor, magnetic buttons, film grain and a one-time intro loader.
 - **Custom scroll-spy navigation** that highlights the active section as you scroll.
-- **Tilt-on-hover project cards**, a typewriter effect for the role titles, and an
-  aurora glow behind the hero.
+- **Accessible by default** — every animation respects `prefers-reduced-motion`,
+  and mobile gets a lighter particle count and simplified layouts.
 - **Project case studies** — each project has its own detail page with stats,
   key features, tech stack and an image gallery.
 - **Fully responsive** — single-column mobile layout with a hamburger menu.
@@ -27,7 +30,7 @@ content model, and detailed project case studies.
 | Area            | Technologies                                   |
 | --------------- | ---------------------------------------------- |
 | Core            | React 19, Vite                                 |
-| 3D & Motion     | Three.js, React Three Fiber, drei              |
+| 3D & Motion     | Three.js, React Three Fiber, GLSL, GSAP, Lenis |
 | Styling         | CSS3 (custom properties, no framework)         |
 | Tooling         | Oxlint                                          |
 | Deployment      | Vercel                                          |

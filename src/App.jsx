@@ -1,34 +1,50 @@
-import { useState, useEffect, useRef, Suspense, lazy } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react'
 import './App.css'
 import { profile, socials, skills, marqueeSkills, projects, timeline } from './data'
 import Typewriter from './components/Typewriter'
 import Icon from './components/Icon'
 import ProjectDetail from './components/ProjectDetail'
-import { useTilt } from './hooks/useTilt'
+import { SplitText, Cursor, Preloader } from './components/Motion'
+import { useMagnetic } from './hooks/useMagnetic'
 import { useScrollSpy, useScrollProgress } from './hooks/useScrollSpy'
 import { useRoute } from './hooks/useRoute'
+import { initSmoothScroll, getLenis, gsap, ScrollTrigger, prefersReducedMotion } from './lib/motion'
 
-// 3D sahne ağır olduğu için tembel (lazy) yüklenir; hazır olana kadar CSS blob gösterilir
-const Hero3D = lazy(() => import('./components/Hero3D'))
+// Parçacık sahnesi ağır olduğu için tembel (lazy) yüklenir
+const ParticleField = lazy(() => import('./components/ParticleField'))
 
 /* Sosyal medya ikon linkleri — mailto linkleri yeni sekmede açılmaz */
+function SocialLink({ s }) {
+  const ref = useMagnetic(0.35)
+  const isMail = s.url.startsWith('mailto:')
+  return (
+    <a
+      ref={ref}
+      href={s.url}
+      aria-label={s.label}
+      {...(isMail ? {} : { target: '_blank', rel: 'noreferrer' })}
+    >
+      <Icon name={s.icon} size={20} />
+    </a>
+  )
+}
+
 function SocialLinks() {
   return (
     <div className="hero-socials">
-      {socials.map((s) => {
-        const isMail = s.url.startsWith('mailto:')
-        return (
-          <a
-            key={s.label}
-            href={s.url}
-            aria-label={s.label}
-            {...(isMail ? {} : { target: '_blank', rel: 'noreferrer' })}
-          >
-            <Icon name={s.icon} size={20} />
-          </a>
-        )
-      })}
+      {socials.map((s) => (
+        <SocialLink key={s.label} s={s} />
+      ))}
     </div>
+  )
+}
+
+function MagneticButton({ className = '', children, ...props }) {
+  const ref = useMagnetic(0.25)
+  return (
+    <a ref={ref} className={`btn ${className}`} {...props}>
+      {children}
+    </a>
   )
 }
 
@@ -58,40 +74,36 @@ function Reveal({ children, className = '', delay = 0, tag = 'div' }) {
   )
 }
 
-/* İmleci takip eden ambiyans ışığı */
-function Spotlight() {
-  const ref = useRef(null)
-  useEffect(() => {
-    if (window.matchMedia('(hover: none)').matches) return
-    let raf = 0
-    const onMove = (e) => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const el = ref.current
-        if (!el) return
-        el.style.setProperty('--sx', `${e.clientX}px`)
-        el.style.setProperty('--sy', `${e.clientY}px`)
-      })
-    }
-    window.addEventListener('mousemove', onMove, { passive: true })
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('mousemove', onMove)
-    }
-  }, [])
-  return <div ref={ref} className="spotlight" aria-hidden="true" />
-}
-
-/* Sonsuz akan teknoloji şeridi — AI/ML odaklı liste (data.js: marqueeSkills) */
+/* Sonsuz akan teknoloji şeridi — kaydırma hızına göre hızlanır */
 function TechMarquee() {
-  const items = marqueeSkills
-  // Kesintisiz döngü için liste iki kez basılır
+  const track = useRef(null)
+  useEffect(() => {
+    const el = track.current
+    if (!el || prefersReducedMotion()) return
+    let x = 0
+    let boost = 0
+    let raf = 0
+    let last = window.scrollY
+    const loop = () => {
+      const y = window.scrollY
+      const v = y - last
+      last = y
+      boost += (Math.abs(v) * 0.35 - boost) * 0.1
+      x -= 0.45 + boost
+      const half = el.scrollWidth / 2
+      if (half > 0 && -x >= half) x += half
+      el.style.transform = `translate3d(${x}px,0,0)`
+      raf = requestAnimationFrame(loop)
+    }
+    loop()
+    return () => cancelAnimationFrame(raf)
+  }, [])
   return (
     <div className="marquee" aria-hidden="true">
-      <div className="marquee-track">
+      <div className="marquee-track" ref={track}>
         {[0, 1].map((copy) => (
           <span key={copy} className="marquee-item">
-            {items.map((item) => (
+            {marqueeSkills.map((item) => (
               <span key={item} className="marquee-item">
                 {item}
                 <span className="marquee-dot" />
@@ -101,31 +113,6 @@ function TechMarquee() {
         ))}
       </div>
     </div>
-  )
-}
-
-/* Mouse'a göre eğilen (3D tilt) + ışık yansımalı kart. onClick verilirse tıklanabilir/klavye erişilebilir olur */
-function TiltCard({ className = '', children, max = 8, tag = 'article', onClick }) {
-  const ref = useTilt({ max })
-  const Tag = tag
-  const interactiveProps = onClick
-    ? {
-        onClick,
-        role: 'link',
-        tabIndex: 0,
-        onKeyDown: (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onClick(e)
-          }
-        },
-      }
-    : {}
-  return (
-    <Tag ref={ref} className={`tilt-card ${className}`} {...interactiveProps}>
-      {children}
-      <span className="card-glare" aria-hidden="true" />
-    </Tag>
   )
 }
 
@@ -152,9 +139,10 @@ function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const active = useScrollSpy(spyIds)
+  const contactRef = useMagnetic(0.25)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
   return (
@@ -174,7 +162,7 @@ function Navbar() {
               {l.label}
             </a>
           ))}
-          <a className="nav-contact" href="#contact" onClick={() => setOpen(false)}>
+          <a ref={contactRef} className="nav-contact" href="#contact" onClick={() => setOpen(false)}>
             Contact
           </a>
         </nav>
@@ -187,167 +175,92 @@ function Navbar() {
 }
 
 /* ---------- HERO ---------- */
-function Hero() {
-  const visualRef = useRef(null)
-
-  // Mouse'a göre chip/avatar katmanlarını kaydıran parallax
-  useEffect(() => {
-    const el = visualRef.current
-    if (!el) return
-    if (window.matchMedia('(hover: none)').matches) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    const onMove = (e) => {
-      const rect = el.getBoundingClientRect()
-      const px = (e.clientX - rect.left) / rect.width - 0.5 // -0.5..0.5
-      const py = (e.clientY - rect.top) / rect.height - 0.5
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        el.style.setProperty('--px', px.toFixed(3))
-        el.style.setProperty('--py', py.toFixed(3))
-      })
-    }
-    const onLeave = () => {
-      el.style.setProperty('--px', '0')
-      el.style.setProperty('--py', '0')
-    }
-    el.addEventListener('mousemove', onMove)
-    el.addEventListener('mouseleave', onLeave)
-    return () => {
-      cancelAnimationFrame(raf)
-      el.removeEventListener('mousemove', onMove)
-      el.removeEventListener('mouseleave', onLeave)
-    }
-  }, [])
-
+function Hero({ ready }) {
+  const [first, ...rest] = profile.name.split(' ')
   return (
-    <section id="about" className="hero">
-      <div className="hero-aurora" aria-hidden="true">
-        <div className="aurora-blob aurora-1" />
-        <div className="aurora-blob aurora-2" />
-      </div>
-      <div className="hero-grid">
+    <section id="about" className={`hero ${ready ? 'is-ready' : ''}`}>
+      <div className="hero-inner">
         <div className="hero-text">
-          <Reveal delay={80} tag="p">
-            <span className="hero-hello">Hi, I'm</span>
-          </Reveal>
-          <Reveal delay={140} tag="h1">
-            <span className="hero-name">{profile.name}</span>
-          </Reveal>
-          <Reveal delay={200} tag="p">
-            <span className="hero-title">
-              <Typewriter words={profile.roles} />
-            </span>
-          </Reveal>
-          <Reveal delay={260} tag="p">
-            <span className="hero-tagline">{profile.tagline}</span>
-          </Reveal>
-          <Reveal className="hero-actions" delay={340}>
-            <a className="btn btn-primary" href="#projects">
+          <p className="hero-hello hero-fade" style={{ '--d': '0ms' }}>
+            <span className="hero-hello-line" /> Hi, I'm
+          </p>
+          <h1 className="hero-name" aria-label={profile.name}>
+            <SplitText text={first} by="char" play={ready} delay={80} stagger={45} />
+            <SplitText
+              text={rest.join(' ')}
+              by="char"
+              play={ready}
+              delay={330}
+              stagger={45}
+              className="hero-name-accent"
+            />
+          </h1>
+          <p className="hero-title hero-fade" style={{ '--d': '650ms' }}>
+            <Typewriter words={profile.roles} />
+          </p>
+          <p className="hero-tagline hero-fade" style={{ '--d': '760ms' }}>
+            {profile.tagline}
+          </p>
+          <div className="hero-actions hero-fade" style={{ '--d': '860ms' }}>
+            <MagneticButton className="btn-primary" href="#projects" data-cursor="Work">
               View My Projects <Icon name="arrow" size={18} />
-            </a>
-            <a className="btn btn-ghost" href="#contact">
+            </MagneticButton>
+            <MagneticButton className="btn-ghost" href="#contact">
               Get in Touch
-            </a>
-          </Reveal>
-          <Reveal delay={420}>
-            <SocialLinks />
-          </Reveal>
-        </div>
-        <Reveal className="hero-visual" delay={200}>
-          <div className="hero-visual-inner" ref={visualRef}>
-            <Suspense fallback={<div className="avatar-blob" />}>
-              <Hero3D />
-            </Suspense>
-            <div className="avatar">{profile.initials}</div>
+            </MagneticButton>
           </div>
-        </Reveal>
+          <div className="hero-fade" style={{ '--d': '960ms' }}>
+            <SocialLinks />
+          </div>
+        </div>
       </div>
+
+      {/* Parçacık elin yanındaki küçük "figür" açıklaması */}
+      <div className="hero-hud hero-fade" style={{ '--d': '1300ms' }} aria-hidden="true">
+        <span className="hud-tag">fig. 01</span>
+        <span>21-point hand landmark model</span>
+        <span className="hud-muted">RTMW / RTMPose · SignaTurk</span>
+      </div>
+
+      <a href="#skills" className="scroll-cue hero-fade" style={{ '--d': '1400ms' }} aria-label="Scroll down">
+        <span className="scroll-cue-line" />
+        <span>Scroll</span>
+      </a>
     </section>
   )
 }
 
-const SectionHead = ({ eyebrow, title }) => (
-  <Reveal className="section-head">
-    <span className="eyebrow">{eyebrow}</span>
-    <h2 className="section-title">{title}</h2>
-  </Reveal>
-)
+function SectionHead({ index, eyebrow, title }) {
+  return (
+    <div className="section-head">
+      <Reveal className="section-meta">
+        <span className="section-index">{index}</span>
+        <span className="eyebrow">{eyebrow}</span>
+        <span className="section-rule" />
+      </Reveal>
+      <SplitText as="h2" className="section-title" text={title} />
+    </div>
+  )
+}
 
-/* ---------- YETENEKLER ---------- */
+/* ---------- YETENEKLER: editoryal liste ---------- */
 function Skills() {
   return (
     <section id="skills" className="section">
-      <SectionHead eyebrow="What I do" title="Skills & Technologies" />
-      <div className="skills-grid">
+      <SectionHead index="01" eyebrow="What I do" title="Skills & Technologies" />
+      <div className="skills-list">
         {skills.map((group, i) => (
-          <Reveal key={group.category} delay={i * 80}>
-            <TiltCard className="skill-card">
-              <h3>{group.category}</h3>
-              <div className="pills">
-                {group.items.map((item) => (
-                  <span key={item} className="pill">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </TiltCard>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-/* ---------- PROJELER ---------- */
-function Projects({ navigate }) {
-  return (
-    <section id="projects" className="section">
-      <SectionHead eyebrow="My work" title="Featured Projects" />
-      <div className="projects-grid">
-        {projects.map((p, i) => (
-          <Reveal key={p.title} delay={i * 90}>
-            <TiltCard className="project-card" onClick={() => navigate(`/projects/${p.slug}`)}>
-            <div className="project-top">
-              <span className="project-index">0{i + 1}</span>
-              <div className="project-links">
-                {p.github && (
-                  <a
-                    href={p.github}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="GitHub"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Icon name="github" size={20} />
-                  </a>
-                )}
-                {p.demo && (
-                  <a
-                    href={p.demo}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Demo"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Icon name="external" size={20} />
-                  </a>
-                )}
-              </div>
-            </div>
-            <h3>{p.title}</h3>
-            <p>{p.description}</p>
-            <div className="pills">
-              {p.tags.map((t) => (
-                <span key={t} className="pill pill-accent">
-                  {t}
+          <Reveal key={group.category} className="skill-row" delay={i * 60}>
+            <span className="skill-index">{String(i + 1).padStart(2, '0')}</span>
+            <h3 className="skill-cat">{group.category}</h3>
+            <p className="skill-items">
+              {group.items.map((item, j) => (
+                <span key={item}>
+                  {item}
+                  {j < group.items.length - 1 && <span className="skill-sep">/</span>}
                 </span>
               ))}
-            </div>
-            <span className="project-cta">
-              Read case study <Icon name="arrow" size={16} />
-            </span>
-            </TiltCard>
+            </p>
           </Reveal>
         ))}
       </div>
@@ -355,14 +268,187 @@ function Projects({ navigate }) {
   )
 }
 
-/* ---------- DENEYİM & EĞİTİM ---------- */
-function Timeline() {
+/* Projenin kapak görseli; görseli olmayan proje için tipografik kapak */
+function ProjectCover({ project }) {
+  if (project.cover) {
+    return (
+      <div className="panel-media">
+        <div className="panel-chrome">
+          <i />
+          <i />
+          <i />
+          <span>{project.coverLabel || project.title}</span>
+        </div>
+        <div className="panel-img-wrap">
+          {/* coverZoom: ekran görüntüsündeki uygulama çerçevesini kırpmak için yakınlaştırma */}
+          <div
+            className="panel-img-zoom"
+            style={{
+              transform: `scale(${project.coverZoom || 1})`,
+              transformOrigin: project.coverOrigin || 'center',
+            }}
+          >
+            <img
+              src={project.cover}
+              alt={project.title}
+              loading="lazy"
+              style={{ objectPosition: project.coverPosition || 'center' }}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
-    <section id="experience" className="section">
-      <SectionHead eyebrow="My journey" title="Experience & Education" />
+    <div className="panel-media panel-media-type">
+      <span className="panel-type-big">You&rsquo;re here.</span>
+      <span className="panel-type-small">React · Three.js · GLSL · GSAP</span>
+    </div>
+  )
+}
+
+/* ---------- PROJELER: üst üste yığılan sabit paneller ---------- */
+function Projects({ navigate }) {
+  const wrap = useRef(null)
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return
+    const ctx = gsap.context(() => {
+      const panels = gsap.utils.toArray('.project-panel')
+      panels.forEach((panel, i) => {
+        const next = panels[i + 1]
+        if (!next) return
+        // Bir sonraki panel üstüne kayarken mevcut panel geri çekilir ve kararır
+        gsap.to(panel.querySelector('.panel-inner'), {
+          scale: 0.9,
+          opacity: 0.35,
+          filter: 'blur(2px)',
+          ease: 'none',
+          scrollTrigger: {
+            trigger: next,
+            start: 'top bottom',
+            end: 'top 18%',
+            scrub: true,
+          },
+        })
+      })
+      // Görseller panel içinde hafif parallax yapar
+      gsap.utils.toArray('.panel-img-wrap img').forEach((img) => {
+        gsap.fromTo(
+          img,
+          { yPercent: -6 },
+          {
+            yPercent: 6,
+            ease: 'none',
+            scrollTrigger: { trigger: img, start: 'top bottom', end: 'bottom top', scrub: true },
+          }
+        )
+      })
+    }, wrap)
+    return () => ctx.revert()
+  }, [])
+
+  return (
+    <section id="projects" className="section">
+      <SectionHead index="02" eyebrow="Selected work" title="Featured Projects" />
+      <div className="projects-stack" ref={wrap}>
+        {projects.map((p, i) => (
+          <article
+            key={p.slug}
+            className="project-panel"
+            style={{ '--i': i }}
+          >
+            <div
+              className="panel-inner"
+              role="link"
+              tabIndex={0}
+              data-cursor="Open"
+              onClick={() => navigate(`/projects/${p.slug}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate(`/projects/${p.slug}`)
+                }
+              }}
+            >
+              <div className="panel-text">
+                <div className="panel-top">
+                  <span className="panel-index">{String(i + 1).padStart(2, '0')}</span>
+                  {p.status && <span className="panel-status">{p.status}</span>}
+                </div>
+                <h3 className="panel-title">{p.title}</h3>
+                <p className="panel-desc">{p.description}</p>
+                <div className="pills">
+                  {p.tags.map((t) => (
+                    <span key={t} className="pill pill-accent">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <div className="panel-actions">
+                  <span className="panel-cta">
+                    Read case study <Icon name="arrow" size={16} />
+                  </span>
+                  {p.github && (
+                    <a
+                      className="panel-gh"
+                      href={p.github}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="GitHub"
+                      data-cursor="Code"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Icon name="github" size={18} />
+                    </a>
+                  )}
+                </div>
+              </div>
+              <ProjectCover project={p} />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/* ---------- DENEYİM & EĞİTİM: kaydırdıkça çizilen çizgi ---------- */
+function Timeline() {
+  const wrap = useRef(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const reduced = prefersReducedMotion()
+      if (!reduced) {
+        gsap.fromTo(
+          '.timeline-fill',
+          { scaleY: 0 },
+          {
+            scaleY: 1,
+            ease: 'none',
+            scrollTrigger: { trigger: '.timeline', start: 'top 65%', end: 'bottom 60%', scrub: true },
+          }
+        )
+      }
+      gsap.utils.toArray('.timeline-item').forEach((item) => {
+        ScrollTrigger.create({
+          trigger: item,
+          start: 'top 62%',
+          toggleClass: 'is-active',
+        })
+      })
+    }, wrap)
+    return () => ctx.revert()
+  }, [])
+
+  return (
+    <section id="experience" className="section" ref={wrap}>
+      <SectionHead index="03" eyebrow="My journey" title="Experience & Education" />
       <div className="timeline">
+        <span className="timeline-fill" aria-hidden="true" />
         {timeline.map((item, i) => (
-          <Reveal key={i} className={`timeline-item ${item.type}`} delay={i * 90}>
+          <Reveal key={i} className={`timeline-item ${item.type}`} delay={60}>
             <div className="timeline-dot" />
             <div className="timeline-card">
               <div className="timeline-topline">
@@ -400,29 +486,96 @@ function Timeline() {
   )
 }
 
+/* Profildeki saat dilimine göre canlı yerel saat */
+function LocalTime() {
+  const fmt = useCallback(
+    () =>
+      new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: profile.timezone || undefined,
+      }).format(new Date()),
+    []
+  )
+  const [time, setTime] = useState(fmt)
+  useEffect(() => {
+    const id = setInterval(() => setTime(fmt()), 15000)
+    return () => clearInterval(id)
+  }, [fmt])
+  return <span>{time}</span>
+}
+
 /* ---------- İLETİŞİM ---------- */
 function Contact() {
+  const btn = useMagnetic(0.2)
+  const [copied, setCopied] = useState(false)
+
+  const copy = async (e) => {
+    // Panoya kopyalanabiliyorsa kopyala; olmazsa mailto linki normal çalışır
+    try {
+      await navigator.clipboard.writeText(profile.email)
+      e.preventDefault()
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2200)
+    } catch {
+      /* mailto'ya düş */
+    }
+  }
+
   return (
     <section id="contact" className="section contact-section">
-      <Reveal className="contact-card">
-        <span className="eyebrow">Contact</span>
-        <h2 className="contact-title">Let's work together</h2>
-        <p className="contact-text">
-          Feel free to reach out about a project, an internship, or a job
-          opportunity. I'll get back to you as soon as I can.
-        </p>
-        <SocialLinks />
-      </Reveal>
+      <div className="contact-inner">
+        <Reveal className="section-meta contact-meta">
+          <span className="section-index">04</span>
+          <span className="eyebrow">Contact</span>
+        </Reveal>
+        <h2 className="contact-title">
+          <SplitText text="Let's build" />
+          <SplitText text="something together." className="contact-title-accent" delay={180} />
+        </h2>
+        <Reveal tag="p" className="contact-text" delay={150}>
+          Feel free to reach out about a project, an internship, or a job opportunity.
+          I'll get back to you as soon as I can.
+        </Reveal>
+        <Reveal className="contact-actions" delay={250}>
+          <a
+            ref={btn}
+            className={`contact-email ${copied ? 'is-copied' : ''}`}
+            href={`mailto:${profile.email}`}
+            onClick={copy}
+            data-cursor={copied ? 'Copied' : 'Copy'}
+          >
+            <span className="contact-email-text">{copied ? 'Copied to clipboard ✓' : profile.email}</span>
+            <span className="contact-email-icon">
+              <Icon name="arrow" size={22} />
+            </span>
+          </a>
+        </Reveal>
+        <Reveal className="contact-foot" delay={320}>
+          <SocialLinks />
+          <span className="contact-local">
+            <span className="status-dot" /> {profile.location} · <LocalTime />
+          </span>
+        </Reveal>
+      </div>
     </section>
   )
 }
 
 function Footer() {
+  const toTop = (e) => {
+    e.preventDefault()
+    const lenis = getLenis()
+    if (lenis) lenis.scrollTo(0, { duration: 1.6 })
+    else window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   return (
     <footer className="footer">
       <span>© {new Date().getFullYear()} {profile.name}</span>
-      <span className="footer-sep">·</span>
-      <span>All rights reserved.</span>
+      <span className="footer-mid">Designed &amp; built from scratch</span>
+      <a href="#about" className="footer-top" onClick={toTop}>
+        Back to top ↑
+      </a>
     </footer>
   )
 }
@@ -431,27 +584,50 @@ export default function App() {
   const { path, navigate } = useRoute()
   const match = path.match(/^\/projects\/([^/]+)\/?$/)
   const activeProject = match ? projects.find((p) => p.slug === match[1]) : null
+  const [ready, setReady] = useState(false)
+  const onIntroDone = useCallback(() => setReady(true), [])
 
-  if (activeProject) {
-    return <ProjectDetail project={activeProject} onBack={() => navigate('/')} />
-  }
+  useEffect(() => {
+    initSmoothScroll()
+    // Görseller yüklenince ScrollTrigger konumlarını yeniden hesapla
+    const refresh = () => ScrollTrigger.refresh()
+    window.addEventListener('load', refresh)
+    return () => window.removeEventListener('load', refresh)
+  }, [])
+
+  // Detay sayfasından dönünce de tetikleyiciler doğru ölçülsün
+  useEffect(() => {
+    const id = setTimeout(() => ScrollTrigger.refresh(), 150)
+    return () => clearTimeout(id)
+  }, [path])
 
   return (
     <>
-      <Spotlight />
-      <ScrollProgress />
-      <Navbar />
-      <main>
-        <Hero />
-        <TechMarquee />
-        <div className="container">
-          <Skills />
-          <Projects navigate={navigate} />
-          <Timeline />
-        </div>
-        <Contact />
-      </main>
-      <Footer />
+      <Preloader onDone={onIntroDone} />
+      <Cursor />
+      <div className="grain" aria-hidden="true" />
+      {activeProject ? (
+        <ProjectDetail project={activeProject} onBack={() => navigate('/')} />
+      ) : (
+        <>
+          <Suspense fallback={null}>
+            <ParticleField />
+          </Suspense>
+          <ScrollProgress />
+          <Navbar />
+          <main>
+            <Hero ready={ready} />
+            <TechMarquee />
+            <div className="container">
+              <Skills />
+              <Projects navigate={navigate} />
+              <Timeline />
+            </div>
+            <Contact />
+          </main>
+          <Footer />
+        </>
+      )}
     </>
   )
 }

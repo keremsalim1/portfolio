@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { scrollToTop } from '../lib/motion'
 
 /* Basit path tabanlı yönlendirme: sayfa yenilenmeden history API ile geçiş yapar */
 export function useRoute() {
@@ -15,7 +16,7 @@ export function useRoute() {
       window.history.pushState({}, '', to)
       setPath(to)
     }
-    window.scrollTo(0, 0)
+    scrollToTop()
   }, [])
 
   return { path, navigate }

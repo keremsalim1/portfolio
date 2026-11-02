@@ -25,6 +25,8 @@ export const profile = {
   tagline:
     'Final-year software engineering student with an emphasis on clean, maintainable code.',
   location: 'Cyprus',
+  // İletişim bölümündeki canlı saat için (IANA saat dilimi)
+  timezone: 'Asia/Nicosia',
   email: 'salimkerem22@gmail.com',
   // Baş harfler avatar için kullanılır (foto koymak istersen App.jsx'e bak)
   initials: 'KS',
@@ -122,6 +124,12 @@ export const projects = [
     tags: ['Python', 'FastAPI', 'TensorFlow / Keras', 'Computer Vision', 'React', 'Three.js', 'PostgreSQL'],
     github: 'https://github.com/keremsalim1/SignaTurk',
     demo: '',
+    // Ana sayfadaki proje panelinde gösterilen kapak görseli
+    cover: signaturkHayir,
+    coverLabel: 'signaturk — 3D avatar',
+    coverPosition: '46% 50%',
+    coverZoom: 1.35,
+    coverOrigin: '50% 78%',
     stats: [
       { label: 'Sign classes', value: '226' },
       { label: 'Dataset', value: 'AUTSL' },
@@ -173,6 +181,9 @@ export const projects = [
     tags: ['Python', 'FastAPI', 'NumPy', 'React', 'Docker', 'Pytest'],
     github: 'https://github.com/keremsalim1/ValueBetAnalyzer',
     demo: '',
+    cover: vbaDashboard,
+    coverLabel: 'value-bet-analyzer — CLV trend',
+    coverPosition: '50% 100%',
     stats: [
       { label: 'Automated tests', value: '257' },
       { label: 'Staking model', value: 'Adaptive Kelly' },
@@ -206,27 +217,28 @@ export const projects = [
     status: 'This Website',
     title: 'Personal Portfolio Website',
     description:
-      "The single-page site you're viewing — built with React and Vite. Features an interactive 3D hero scene, a custom scroll-spy, tilt and typewriter effects, and a fully data-driven content model.",
+      "The single-page site you're viewing — built with React and Vite. A custom GLSL particle system morphs from a hand-landmark skeleton into a neural network, a probability surface and a sphere as you scroll, driven by GSAP and Lenis smooth scrolling.",
     overview:
       "The single-page site you're currently browsing — designed and built from scratch to present my background, skills and projects with a bit of visual polish.",
-    tags: ['React', 'Vite', 'Three.js', 'React Three Fiber', 'CSS3'],
+    tags: ['React', 'Vite', 'Three.js', 'GLSL', 'GSAP', 'CSS3'],
     github: '',
     demo: '',
     stats: [
       { label: 'Framework', value: 'React + Vite' },
-      { label: '3D engine', value: 'Three.js / R3F' },
+      { label: '3D engine', value: 'Three.js + GLSL' },
       { label: 'Linting', value: 'Oxlint' },
       { label: 'Type', value: 'Single-page app' },
     ],
     features: [
-      'Interactive 3D hero scene built with Three.js and React Three Fiber, reacting to cursor movement',
-      'Custom scroll-spy navigation, tilt-on-hover project cards and a typewriter effect for the role titles',
+      'Scroll-driven particle system (~16k points, custom GLSL shaders) that morphs between a 21-point hand skeleton, a neural network, a probability surface and a sphere',
+      'Lenis smooth scrolling synced with GSAP ScrollTrigger: stacking project panels, a self-drawing timeline and masked text reveals',
+      'Custom cursor, magnetic buttons, a one-time intro loader and full reduced-motion / mobile fallbacks',
       'Fully data-driven content model — every section renders from a single content file, no hardcoded copy in components',
       'Vite build pipeline linted with Oxlint to keep the codebase clean and fast to ship',
     ],
     stack: [
       { category: 'Core', items: ['JavaScript', 'React', 'Vite'] },
-      { category: '3D & Motion', items: ['Three.js', 'React Three Fiber'] },
+      { category: '3D & Motion', items: ['Three.js', 'React Three Fiber', 'GLSL', 'GSAP', 'Lenis'] },
       { category: 'Styling & Tooling', items: ['HTML5', 'CSS3', 'Oxlint'] },
     ],
   },

@@ -1,5 +1,5 @@
 /* Zarif tipografi: Fraunces (başlıklar) + Inter (metin) */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,0..100;1,9..144,300..700,0..100&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   /* ===== Koyu premium palet — buradan değiştirilebilir ===== */
@@ -21,9 +21,11 @@
 
   --serif: 'Fraunces', 'Georgia', 'Times New Roman', serif;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --radius: 20px;
-  --max-width: 1120px;
+  --max-width: 1200px;
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 14px 38px -14px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 34px 70px -24px rgba(0, 0, 0, 0.7);
@@ -40,6 +42,7 @@
 
 html {
   scroll-behavior: smooth;
+  /* Lenis aktifken tarayıcının kendi yumuşak kaydırması kapatılır */
   scroll-padding-top: 90px;
   overflow-x: clip;
 }
@@ -124,4 +127,19 @@ img {
     transform: none;
     transition: none;
   }
+}
+
+/* ===== Lenis yumuşak kaydırma ===== */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
